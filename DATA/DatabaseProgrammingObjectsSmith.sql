@@ -1,0 +1,2 @@
+-- 3 query
+-- 1 for each ConfrenceDivision and team Tables, and 1 inner join query
