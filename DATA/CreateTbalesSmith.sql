@@ -5,7 +5,7 @@
 
 --DROP database NFL_RDB_Smith;
 
-USE MIST353_NFL_RDB_Smith;
+
 
 if OBJECT_ID('Team') IS NOT NULL
     DROP TABLE Team;
@@ -33,6 +33,46 @@ CREATE TABLE ConfrenceDivision (
         CONSTRAINT CK_DivisionNames CHECK (Division IN ('East', 'North', 'South', 'West'))
     CONSTRAINT UK_ConferenceDivision UNIQUE (Confrence, Division)
 );
+
+CREATE TABLE Game (
+    GameID INT IDENTITY(1,1) CONSTRAINT PK_Game PRIMARY KEY,
+    GameDate DATE NOT NULL,
+    GameStartTime TIME NOT NULL,
+    GameEndTime TIME NOT NULL
+);
+
+CREATE TABLE Stadium (
+    StadiumID INT IDENTITY(1,1) CONSTRAINT PK_Stadium PRIMARY KEY,
+    StadiumName NVARCHAR(50) NOT NULL,
+    StadiumCity NVARCHAR(50) NOT NULL,
+    StadiumState NVARCHAR(50) NOT NULL,
+    StadiumCapacity INT NOT NULL
+);
+
+CREATE TABLE AdminUpdate (
+    AdminUpdateID INT IDENTITY(1,1) CONSTRAINT PK_AdminUpdate PRIMARY KEY,
+    UpdateType NVARCHAR(50) NOT NULL,
+    UpdateDateTime DATETIME NOT NULL,
+    UpdatedValues NVARCHAR(255),
+    OldScore INT
+);
+--check this
+CREATE TABLE FanTeam (
+    FanTeamID INT IDENTITY(1,1) CONSTRAINT PK_FanTeam PRIMARY KEY,
+    PrimaryTeam BIT NOT NULL
+);
+
+CREATE TABLE AppUser (
+    AppUserID INT IDENTITY(1,1) CONSTRAINT PK_AppUser PRIMARY KEY,
+    FirstName NVARCHAR(50) NOT NULL,
+    LastName NVARCHAR(50) NOT NULL,
+    Email NVARCHAR(100) NOT NULL,
+    Password NVARCHAR(100) NOT NULL,
+    Phone NVARCHAR(20),
+    UserRole NVARCHAR(50) NOT NULL
+);
+
+
 
 
 

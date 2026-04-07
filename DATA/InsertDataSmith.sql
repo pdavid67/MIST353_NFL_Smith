@@ -50,3 +50,19 @@ VALUES
 
 GO
 SELECT * FROM Team order by TeamID;
+
+INSERT INTO Stadium (StadiumName, StadiumCity, StadiumState, StadiumCapacity)
+VALUES ('Arrowhead Stadium', 'Kansas City', 'Missouri', 76416);
+
+INSERT INTO Game (GameDate, GameStartTime, GameEndTime)
+VALUES ('2026-09-15', '13:00:00', '16:15:00');
+
+INSERT INTO AdminUpdate (UpdateType, UpdateDateTime, UpdatedValues, OldScore)
+VALUES ('Score Update', '2026-09-15 14:30:00', 'HomeScore changed to 21', 14);
+--check back on this
+INSERT INTO FanTeam (PrimaryTeam)
+VALUES (1);
+
+INSERT INTO AppUser (FirstName, LastName, Email, Password, Phone, UserRole)
+VALUES ('John', 'Smith', 'johnsmith@email.com', 'password123', '3045551234', 'Fan');
+
