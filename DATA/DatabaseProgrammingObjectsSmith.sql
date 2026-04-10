@@ -66,4 +66,217 @@ WHERE TeamName = 'Pittsburgh Steelers';
 
 SELECT TeamName, ConfrenceDivisionID
 FROM Team
-WHERE ConfrenceDivisionID = 2;
+WHERE CfiedFan
+(onfrenceDivisionID = 2;
+
+create or alter proc procGetTeamsForSpecifiedFan
+(
+    @NFLFanID INT
+)
+AS
+BEGIN
+    SELECT t.TeamName, cd.Confrence, cd.Division
+    FROM Team t
+    INNER JOIN ConfrenceDivision cd
+        ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
+    INNER JOIN FanTeam ft
+        ON t.TeamID = ft.TeamID
+    WHERE ft.NFLFanID = @NFLFanID;
+END;
+
+-- execute procGetTeamsForSpecifiedFan @NFLFanID = 1;
+
+
+
+
+
+/* =========================================
+   1) DELETE OLD PROCEDURES IF THEY EXIST
+   ========================================= */
+
+IF OBJECT_ID('dbo.GetTeamsByConferenceDivision', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.GetTeamsByConferenceDivision;
+GO
+
+IF OBJECT_ID('dbo.GetTeamsInSameConferenceDivisionAsSpecifiedTeam', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.GetTeamsInSameConferenceDivisionAsSpecifiedTeam;
+GO
+
+IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
+GO
+
+
+/* =========================================
+   2) RECREATE: GET TEAMS BY CONFERENCE/DIVISION
+   ========================================= */
+CREATE PROCEDURE dbo.GetTeamsByConferenceDivision
+    @Confrence NVARCHAR(50),
+    @Division NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        t.TeamID,
+        t.TeamName,
+        t.TeamCityState,
+        t.TeamColors,
+        cd.Confrence,
+        cd.Division
+    FROM Team t
+    INNER JOIN ConfrenceDivision cd
+        ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
+    WHERE cd.Confrence = @Confrence
+      AND cd.Division = @Division
+    ORDER BY t.TeamName;
+END;
+GO
+
+
+/* =========================================
+   3) RECREATE: GET TEAMS IN SAME CONFERENCE/DIVISION
+      AS A SPECIFIED TEAM
+   ========================================= */
+CREATE PROCEDURE dbo.GetTeamsInSameConferenceDivisionAsSpecifiedTeam
+    @TeamName NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @ConfrenceDivisionID INT;
+
+    SELECT @ConfrenceDivisionID = ConfrenceDivisionID
+    FROM Team
+    WHERE TeamName = @TeamName;
+
+    SELECT
+        t.TeamID,
+        t.TeamName,
+        t.TeamCityState,
+        t.TeamColors,
+        cd.Confrence,
+        cd.Division
+    FROM Team t
+    INNER JOIN ConfrenceDivision cd
+        ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
+    WHERE t.ConfrenceDivisionID = @ConfrenceDivisionID
+      AND t.TeamName <> @TeamName
+    ORDER BY t.TeamName;
+END;
+GO
+
+
+/* =========================================
+   4) RECREATE: GET TEAMS FOR SPECIFIED FAN
+      ASSUMES A FanTeam TABLE EXISTS
+      WITH: UserID, TeamID
+   ========================================= */
+IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
+GO
+
+CREATE PROCEDURE dbo.GetTeamsForSpecifiedFan
+    @FanTeamID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        t.TeamID,
+        t.TeamName,
+        t.TeamCityState,
+        t.TeamColors,
+        cd.Confrence,
+        cd.Division
+    FROM FanTeam ft
+    INNER JOIN Team t
+        ON ft.TeamID = t.TeamID
+    INNER JOIN ConfrenceDivision cd
+        ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
+    WHERE ft.FanTeamID = @FanTeamID;
+END;
+GO
+
+
+
+EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = 3;
+
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'FanTeam'
+ORDER BY ORDINAL_POSITION;
+
+
+SELECT name
+FROM sys.procedures
+ORDER BY name;
+
+
+
+DECLARE @sql NVARCHAR(MAX) = N'';
+
+SELECT @sql = @sql + 'DROP PROCEDURE dbo.' + QUOTENAME(name) + ';' + CHAR(13)
+FROM sys.procedures
+WHERE schema_id = SCHEMA_ID('dbo');
+
+EXEC sp_executesql @sql;
+
+
+
+SELECT
+    ft.FanTeamID,
+    ft.NFLFanID,
+    ft.TeamID,
+    ft.PrimaryTeam,
+    t.TeamName,
+    cd.Confrence,
+    cd.Division
+FROM FanTeam ft
+INNER JOIN Team t
+    ON ft.TeamID = t.TeamID
+INNER JOIN ConfrenceDivision cd
+    ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
+ORDER BY ft.FanTeamID;
+
+
+
+SELECT *
+FROM FanTeam
+ORDER BY FanTeamID;
+
+
+EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = 3;
+
+
+
+
+
+IF OBJECT_ID('dbo.procValidateUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.procValidateUser;
+GO
+
+CREATE PROCEDURE dbo.procValidateUser
+    @Email NVARCHAR(100),
+    @PasswordHash VARBINARY(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        AppUserID,
+        FirstName + ' ' + LastName AS FullName,
+        UserRole
+    FROM AppUser
+    WHERE Email = @Email
+      AND PasswordHash = @PasswordHash;
+END;
+GO
+
+
+
+
+EXEC dbo.procValidateUser
+    @Email = 'tom.brady@example.com',
+    @PasswordHash = 0x01;
+GO
