@@ -1,3 +1,5 @@
+import pymssql
+
 from get_db_connection import get_db_connection
 
 import os
@@ -28,7 +30,8 @@ def test_get_db_connection():
 
   conn = get_db_connection()
 
-  assert isinstance(conn, pyodbc.Connection), "Expected a pyodbc.Connection"
+  #assert isinstance(conn, pyodbc.Connection), "Expected a pyodbc.Connection"
+  assert isinstance(conn, pymssql.Connection), "Expected a pymssql.Connection"
 
   print("✅ Connection object returned")
 

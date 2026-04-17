@@ -1,10 +1,15 @@
-from get_db_connection import get_db_connection
+try:
+    from .get_db_connection import get_db_connection
+except ImportError:
+    from get_db_connection import get_db_connection
 
 def validate_user(email: str, password_hash: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn = None
 
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
         cursor.execute(
             "EXEC dbo.procValidateUser @Email = ?, @PasswordHash = ?",
             (email, bytes.fromhex(password_hash.replace("0x", "")))
@@ -20,10 +25,9 @@ def validate_user(email: str, password_hash: str):
             }
             for row in rows
         ]
-
-        conn.close()
         return {"data": results}
-
     except Exception as e:
-        conn.close()
         return {"error": str(e)}
+    finally:
+        if conn is not None:
+            conn.close()

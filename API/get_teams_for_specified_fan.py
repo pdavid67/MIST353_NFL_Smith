@@ -1,10 +1,15 @@
-from get_db_connection import get_db_connection
+try:
+    from .get_db_connection import get_db_connection
+except ImportError:
+    from get_db_connection import get_db_connection
 
 def get_teams_for_specified_fan(FanTeamID):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn = None
 
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
         cursor.execute(
             "EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = ?",
             FanTeamID
@@ -16,10 +21,9 @@ def get_teams_for_specified_fan(FanTeamID):
         data = []
         for row in rows:
             data.append(dict(zip(columns, row)))
-
-        conn.close()
         return {"data": data}
-
     except Exception as e:
-        conn.close()
         return {"error": str(e)}
+    finally:
+        if conn is not None:
+            conn.close()
