@@ -1,6 +1,6 @@
-gunicon
+gunicorn
 fastapi
 uvicorn[standard]
-python-dotnev
-pymssql # discuss why
-pyodbc # and why not
+python-dotenv
+pymssql
+pyodbc
