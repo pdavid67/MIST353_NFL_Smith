@@ -74,6 +74,8 @@ jobs:
         with:
           app-name: 'MIST353-api-smith'
           slot-name: 'Production'
+          # publish-profile auth cannot set startup-command for Linux apps,
+          # so app.py exposes a WSGI wrapper around the FastAPI app.
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
           
