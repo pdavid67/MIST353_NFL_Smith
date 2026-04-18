@@ -1,30 +1,15 @@
 import os
+from importlib import import_module
 from pathlib import Path
 
-import pyodbc
 from dotenv import load_dotenv
 
 ENV_PATH = Path(__file__).resolve().with_name(".env")
 load_dotenv(dotenv_path=ENV_PATH)
 
-def get_db_connection():
-    server = os.getenv('DB_SERVER')
-    database = os.getenv('DB_NAME')
-    username = os.getenv('DB_LOGIN')
-    password = os.getenv('DB_PASSWORD')
 
-    missing = [
-        name
-        for name, value in {
-            "DB_SERVER": server,
-            "DB_NAME": database,
-            "DB_LOGIN": username,
-            "DB_PASSWORD": password,
-        }.items()
-        if not value
-    ]
-    if missing:
-        raise RuntimeError(f"Missing database configuration: {', '.join(missing)}")
+def _connect_with_pyodbc(server: str, database: str, username: str, password: str):
+    pyodbc = import_module("pyodbc")
 
     available_drivers = set(pyodbc.drivers())
     preferred_drivers = [
@@ -53,4 +38,53 @@ def get_db_connection():
         except pyodbc.Error as exc:
             last_error = exc
 
-    raise RuntimeError(f"Database connection failed: {last_error}")
+    raise RuntimeError(f"Database connection failed with pyodbc: {last_error}")
+
+
+def _connect_with_pymssql(server: str, database: str, username: str, password: str):
+    pymssql = import_module("pymssql")
+
+    return pymssql.connect(
+        server=server,
+        user=username,
+        password=password,
+        database=database,
+        port="1433",
+        login_timeout=30,
+        timeout=30,
+        tds_version="7.4",
+        encryption="require",
+    )
+
+
+def get_db_connection():
+    server = os.getenv('DB_SERVER')
+    database = os.getenv('DB_NAME')
+    username = os.getenv('DB_LOGIN')
+    password = os.getenv('DB_PASSWORD')
+
+    missing = [
+        name
+        for name, value in {
+            "DB_SERVER": server,
+            "DB_NAME": database,
+            "DB_LOGIN": username,
+            "DB_PASSWORD": password,
+        }.items()
+        if not value
+    ]
+    if missing:
+        raise RuntimeError(f"Missing database configuration: {', '.join(missing)}")
+
+    errors = []
+
+    for connector_name, connector in (
+        ("pyodbc", _connect_with_pyodbc),
+        ("pymssql", _connect_with_pymssql),
+    ):
+        try:
+            return connector(server, database, username, password)
+        except Exception as exc:
+            errors.append(f"{connector_name}: {exc}")
+
+    raise RuntimeError("Database connection failed. " + " | ".join(errors))
