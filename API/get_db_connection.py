@@ -8,6 +8,15 @@ ENV_PATH = Path(__file__).resolve().with_name(".env")
 load_dotenv(dotenv_path=ENV_PATH)
 
 
+def _parse_sql_server(server: str) -> tuple[str, str]:
+    normalized_server = server.strip()
+    if normalized_server.lower().startswith("tcp:"):
+        normalized_server = normalized_server[4:]
+
+    host, separator, port = normalized_server.partition(",")
+    return host.strip(), port.strip() if separator else "1433"
+
+
 def _connect_with_pyodbc(server: str, database: str, username: str, password: str):
     pyodbc = import_module("pyodbc")
 
@@ -43,13 +52,14 @@ def _connect_with_pyodbc(server: str, database: str, username: str, password: st
 
 def _connect_with_pymssql(server: str, database: str, username: str, password: str):
     pymssql = import_module("pymssql")
+    host, port = _parse_sql_server(server)
 
     return pymssql.connect(
-        server=server,
+        server=host,
         user=username,
         password=password,
         database=database,
-        port="1433",
+        port=port,
         login_timeout=30,
         timeout=30,
         tds_version="7.4",
