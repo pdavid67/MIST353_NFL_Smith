@@ -10,7 +10,6 @@ on:
     paths:
       - '.github/workflows/main_mist353-ui-smith.yml'
       - 'UI/**'
-      - 'requirements.txt'
       - 'streamlit_startup.sh'
   workflow_dispatch:
 
@@ -32,7 +31,11 @@ jobs:
         run: |
           python -m venv antenv
           source antenv/bin/activate
-          pip install -r requirements.txt
+          pip install -r UI/requirements.txt
+
+      - name: Prepare deployment package
+        run: |
+          cp UI/requirements.txt requirements.txt
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -41,7 +44,6 @@ jobs:
           path: |
             UI/
             requirements.txt
-            API/requirements.txt
             streamlit_startup.sh
             !UI/__pycache__/
             !antenv/
