@@ -13,6 +13,7 @@ on:
         - 'API/**'
         - 'requirements.txt'
         - 'app.py'
+        - 'startup.sh'
   workflow_dispatch:
 
 jobs:
@@ -46,6 +47,7 @@ jobs:
             API/
             app.py
             requirements.txt
+            startup.sh
             !API/.env
             !API/__pycache__/
             !antenv/
