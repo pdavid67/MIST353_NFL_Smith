@@ -11,8 +11,8 @@ def get_teams_for_specified_fan(FanTeamID):
         cursor = conn.cursor()
 
         cursor.execute(
-            "EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = ?",
-            FanTeamID
+            "EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = %s",
+            (FanTeamID,)
         )
 
         rows = cursor.fetchall()

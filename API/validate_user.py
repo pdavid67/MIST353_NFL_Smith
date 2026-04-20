@@ -11,7 +11,7 @@ def validate_user(email: str, password_hash: str):
         cursor = conn.cursor()
 
         cursor.execute(
-            "EXEC dbo.procValidateUser @Email = ?, @PasswordHash = ?",
+            "EXEC dbo.procValidateUser @Email = %s, @PasswordHash = %s",
             (email, bytes.fromhex(password_hash.replace("0x", "")))
         )
 
@@ -19,9 +19,9 @@ def validate_user(email: str, password_hash: str):
 
         results = [
             {
-                "AppUserID": row.AppUserID,
-                "FullName": row.FullName,
-                "UserRole": row.UserRole
+                "AppUserID": row[0],
+                "FullName": row[1],
+                "UserRole": row[2]
             }
             for row in rows
         ]

@@ -19,7 +19,7 @@ def get_teams_by_conference_division(conference: str, division: str):
             FROM Team t
             INNER JOIN ConfrenceDivision cd
                 ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
-            WHERE cd.Confrence = ? AND cd.Division = ?
+            WHERE cd.Confrence = %s AND cd.Division = %s
         """
 
         cursor.execute(query, (conference, division))

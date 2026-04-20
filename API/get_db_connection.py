@@ -89,7 +89,6 @@ def get_db_connection():
     errors = []
 
     for connector_name, connector in (
-        ("pyodbc", _connect_with_pyodbc),
         ("pymssql", _connect_with_pymssql),
     ):
         try:
