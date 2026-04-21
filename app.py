@@ -1,11 +1,45 @@
 import traceback
 import sys
+import subprocess
 from pathlib import Path
 
 
-PACKAGE_DIR = Path(__file__).resolve().parent / "api_packages" / "lib" / "site-packages"
-if PACKAGE_DIR.exists():
-    sys.path.insert(0, str(PACKAGE_DIR))
+APP_DIR = Path(__file__).resolve().parent
+PYTHON_TAG = f"py{sys.version_info.major}{sys.version_info.minor}"
+PACKAGE_DIR = APP_DIR / "api_packages" / PYTHON_TAG / "lib" / "site-packages"
+REQUIREMENTS_PATH = APP_DIR / "API" / "requirements.txt"
+
+
+def _add_package_dir():
+    if PACKAGE_DIR.exists():
+        package_path = str(PACKAGE_DIR)
+        if package_path not in sys.path:
+            sys.path.insert(0, package_path)
+
+
+def _ensure_runtime_packages():
+    _add_package_dir()
+    try:
+        import a2wsgi  # noqa: F401
+        import fastapi  # noqa: F401
+    except Exception:
+        PACKAGE_DIR.mkdir(parents=True, exist_ok=True)
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--target",
+                str(PACKAGE_DIR),
+                "-r",
+                str(REQUIREMENTS_PATH),
+            ]
+        )
+        _add_package_dir()
+
+
+_ensure_runtime_packages()
 
 
 def _startup_error_app(startup_error: str):
