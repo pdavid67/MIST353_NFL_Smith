@@ -1,8 +1,20 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 
-FASTAPI_url = "http://localhost:8000"
+def _get_fastapi_url() -> str:
+    env_url = os.getenv("FASTAPI_URL")
+    if env_url:
+        return env_url.rstrip("/")
+
+    try:
+        return st.secrets.get("FASTAPI_URL", "http://localhost:8000").rstrip("/")
+    except Exception:
+        return "http://localhost:8000"
+
+
+FASTAPI_url = _get_fastapi_url()
 
 def fetch_data(endpoint: str, input_params: dict, method: str = "GET"):
     try:
