@@ -1,7 +1,7 @@
 set -e
 
 PYTHON_TAG="$(python -c 'import sys; print(f"py{sys.version_info.major}{sys.version_info.minor}")')"
-APP_DIR="/home/site/wwwroot"
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGE_DIR="$APP_DIR/api_packages/$PYTHON_TAG/lib/site-packages"
 
 export PYTHONPATH="$PACKAGE_DIR:$PYTHONPATH"

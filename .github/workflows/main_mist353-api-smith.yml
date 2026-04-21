@@ -69,6 +69,50 @@ jobs:
         with:
           name: python-app
 
+      - name: Remove stale Oryx files from Azure
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          publish_profile = os.environ["AZURE_WEBAPP_PUBLISH_PROFILE"]
+          profiles = ET.fromstring(publish_profile).findall("publishProfile")
+          profile = next(
+              (p for p in profiles if p.attrib.get("publishMethod") == "MSDeploy"),
+              profiles[0],
+          )
+
+          publish_host = profile.attrib["publishUrl"].split(":")[0]
+          username = profile.attrib["userName"]
+          password = profile.attrib["userPWD"]
+          credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+
+          cleanup_command = (
+              "rm -f /home/site/wwwroot/oryx-manifest.toml "
+              "/home/site/wwwroot/output.tar.gz; "
+              "rm -rf /home/site/wwwroot/antenv "
+              "/home/site/wwwroot/__oryx_packages__ "
+              "/home/site/wwwroot/api_packages"
+          )
+
+          request = urllib.request.Request(
+              f"https://{publish_host}/api/command",
+              data=json.dumps({"command": cleanup_command, "dir": "/home"}).encode(),
+              headers={
+                  "Authorization": f"Basic {credentials}",
+                  "Content-Type": "application/json",
+              },
+          )
+
+          with urllib.request.urlopen(request, timeout=90) as response:
+              print(response.read().decode())
+          PY
+
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
