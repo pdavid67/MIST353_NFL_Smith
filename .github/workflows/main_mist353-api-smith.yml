@@ -9,18 +9,18 @@ on:
     branches:
       - main
     paths:
-        - '.github/workflows/main_mist353-api-smith.yml'
-        - 'API/**'
-        - 'requirements.txt'
-        - 'app.py'
-        - 'startup.sh'
+      - '.github/workflows/main_mist353-api-smith.yml'
+      - 'API/**'
+      - 'requirements.txt'
+      - 'app.py'
+      - 'startup.sh'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -30,38 +30,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      # 🛠️ Local Build Section (Optional)
-      # The following section in your workflow is designed to catch build issues early on the client side, before deployment. This can be helpful for debugging and validation. However, if this step significantly increases deployment time and early detection is not critical for your workflow, you may remove this section to streamline the deployment process.
       - name: Install dependencies into deployment package
         run: |
           mkdir -p api_packages/py312/lib/site-packages
           python -m pip install --target api_packages/py312/lib/site-packages -r API/requirements.txt
-                
-      # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size. 
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy/API deploy/api_packages
+          cp -R API/. deploy/API/
+          cp -R api_packages/. deploy/api_packages/
+          cp app.py requirements.txt startup.sh deploy/
+          chmod +x deploy/startup.sh
+          test -f deploy/startup.sh
+          test -f deploy/app.py
+          test -f deploy/API/requirements.txt
+          cd deploy
+          zip -r ../python-app.zip .
+
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            API/
-            api_packages/
-            app.py
-            requirements.txt
-            startup.sh
-            !API/.env
-            !API/__pycache__/
-
-      # 🚫 Opting Out of Oryx Build
-      # If you prefer to disable the Oryx build process during deployment, follow these steps:
-      # 1. Remove the SCM_DO_BUILD_DURING_DEPLOYMENT app setting from your Azure App Service Environment variables.
-      # 2. Refer to sample workflows for alternative deployment strategies: https://github.com/Azure/actions-workflow-samples/tree/master/AppService
-      
+          path: python-app.zip
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - name: Download artifact from build job
@@ -69,15 +66,18 @@ jobs:
         with:
           name: python-app
 
-      - name: 'Deploy to Azure Web App'
+      - name: Verify deployment package
+        run: |
+          unzip -l python-app.zip | grep -E '(^|[[:space:]])startup\.sh$'
+          unzip -l python-app.zip | grep -E '(^|[[:space:]])app\.py$'
+          unzip -l python-app.zip | grep -E '(^|[[:space:]])API/requirements\.txt$'
+
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'MIST353-api-smith'
           slot-name: 'Production'
-          # publish-profile auth cannot set startup-command for Linux apps,
-          # so app.py exposes a WSGI wrapper around the FastAPI app.
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: python-app.zip
           clean: true
-          
