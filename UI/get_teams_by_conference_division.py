@@ -15,6 +15,9 @@ def get_teams_by_conference_division_ui():
 
         df = fetch_data("get_teams_by_conference_division", params)
 
+        if df is None:
+            return
+
         if df.empty:
             st.info(f"No teams found for {conference} {division}.")
         else:

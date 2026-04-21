@@ -1,4 +1,11 @@
 import traceback
+import sys
+from pathlib import Path
+
+
+PACKAGE_DIR = Path(__file__).resolve().parent / "api_packages" / "lib" / "site-packages"
+if PACKAGE_DIR.exists():
+    sys.path.insert(0, str(PACKAGE_DIR))
 
 
 def _startup_error_app(startup_error: str):

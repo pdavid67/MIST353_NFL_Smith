@@ -15,7 +15,10 @@ def get_teams_for_specified_fan_ui():
             method="GET"
         )
 
-        if df is not None and not df.empty:
+        if df is None:
+            return
+
+        if not df.empty:
             st.success("Team found.")
             st.dataframe(df, use_container_width=True)
         else:

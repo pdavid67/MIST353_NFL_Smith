@@ -8,6 +8,7 @@ FASTAPI_url = os.getenv(
     "FASTAPI_URL",
     "https://mist353-api-smith-bghwaefxfefnbxdu.canadacentral-01.azurewebsites.net",
 ).rstrip("/")
+API_REQUEST_TIMEOUT = float(os.getenv("API_REQUEST_TIMEOUT", "45"))
 
 def fetch_data(endpoint: str, input_params: dict, method: str = "GET"):
     try:
@@ -15,7 +16,7 @@ def fetch_data(endpoint: str, input_params: dict, method: str = "GET"):
             response = requests.get(
                 f"{FASTAPI_url}/{endpoint}",
                 params=input_params,
-                timeout=10
+                timeout=API_REQUEST_TIMEOUT
             )
 
             if response.status_code == 200:
@@ -29,17 +30,22 @@ def fetch_data(endpoint: str, input_params: dict, method: str = "GET"):
                         return pd.DataFrame(payload["data"])
                     if "error" in payload:
                         st.error(payload["error"])
-                        return pd.DataFrame()
+                        return None
                     return pd.DataFrame([payload])
 
                 return pd.DataFrame()
 
             st.error(f"Error fetching data: {response.status_code} - {response.text}")
-            return pd.DataFrame()
+            return None
 
         st.error("Only GET method is supported right now.")
-        return pd.DataFrame()
+        return None
 
+    except requests.Timeout:
+        st.error(
+            f"Timed out after {API_REQUEST_TIMEOUT:g} seconds waiting for the FastAPI backend."
+        )
+        return None
     except Exception as e:
         st.error(f"Error: {e}")
-        return pd.DataFrame()
+        return None

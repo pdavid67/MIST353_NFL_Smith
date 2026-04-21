@@ -43,7 +43,7 @@ def _connect_with_pyodbc(server: str, database: str, username: str, password: st
         )
 
         try:
-            return pyodbc.connect(connection_string, timeout=30)
+            return pyodbc.connect(connection_string, timeout=8)
         except pyodbc.Error as exc:
             last_error = exc
 
@@ -60,8 +60,8 @@ def _connect_with_pymssql(server: str, database: str, username: str, password: s
         password=password,
         database=database,
         port=port,
-        login_timeout=30,
-        timeout=30,
+        login_timeout=8,
+        timeout=15,
         tds_version="7.4",
         encryption="require",
     )
