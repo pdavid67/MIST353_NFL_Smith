@@ -2,23 +2,10 @@ import os
 from importlib import import_module
 from pathlib import Path
 
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    def load_dotenv(*_args, **_kwargs):
-        return None
+from dotenv import load_dotenv
 
 ENV_PATH = Path(__file__).resolve().with_name(".env")
 load_dotenv(dotenv_path=ENV_PATH)
-
-
-def _parse_sql_server(server: str) -> tuple[str, str]:
-    normalized_server = server.strip()
-    if normalized_server.lower().startswith("tcp:"):
-        normalized_server = normalized_server[4:]
-
-    host, separator, port = normalized_server.partition(",")
-    return host.strip(), port.strip() if separator else "1433"
 
 
 def _connect_with_pyodbc(server: str, database: str, username: str, password: str):
@@ -47,7 +34,7 @@ def _connect_with_pyodbc(server: str, database: str, username: str, password: st
         )
 
         try:
-            return pyodbc.connect(connection_string, timeout=8)
+            return pyodbc.connect(connection_string, timeout=30)
         except pyodbc.Error as exc:
             last_error = exc
 
@@ -56,16 +43,15 @@ def _connect_with_pyodbc(server: str, database: str, username: str, password: st
 
 def _connect_with_pymssql(server: str, database: str, username: str, password: str):
     pymssql = import_module("pymssql")
-    host, port = _parse_sql_server(server)
 
     return pymssql.connect(
-        server=host,
+        server=server,
         user=username,
         password=password,
         database=database,
-        port=port,
-        login_timeout=8,
-        timeout=15,
+        port="1433",
+        login_timeout=30,
+        timeout=30,
         tds_version="7.4",
         encryption="require",
     )
@@ -93,6 +79,7 @@ def get_db_connection():
     errors = []
 
     for connector_name, connector in (
+        ("pyodbc", _connect_with_pyodbc),
         ("pymssql", _connect_with_pymssql),
     ):
         try:

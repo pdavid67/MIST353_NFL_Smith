@@ -11,8 +11,8 @@ def get_teams_in_same_conference_division_as_specified_team(team_name):
         cursor = conn.cursor()
 
         cursor.execute(
-            "EXEC dbo.GetTeamsInSameConferenceDivisionAsSpecifiedTeam @TeamName = %s",
-            (team_name,)
+            "EXEC dbo.GetTeamsInSameConferenceDivisionAsSpecifiedTeam @TeamName = ?",
+            team_name
         )
 
         rows = cursor.fetchall()

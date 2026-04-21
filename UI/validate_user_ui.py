@@ -19,10 +19,7 @@ def validate_user_ui():
             method="GET"
         )
 
-        if df is None:
-            return
-
-        if not df.empty:
+        if df is not None and not df.empty:
             st.success("User validated.")
             st.dataframe(df, use_container_width=True)
         else:
