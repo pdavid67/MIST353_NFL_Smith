@@ -27,11 +27,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Create virtual environment and install dependencies
+      - name: Install dependencies into deployment package
         run: |
-          python -m venv antenv
-          source antenv/bin/activate
-          pip install -r UI/requirements.txt
+          mkdir -p .python_packages/lib/site-packages
+          python -m pip install --target .python_packages/lib/site-packages -r UI/requirements.txt
 
       - name: Prepare deployment package
         run: |
@@ -43,10 +42,10 @@ jobs:
           name: streamlit-app
           path: |
             UI/
+            .python_packages/
             requirements.txt
             streamlit_startup.sh
             !UI/__pycache__/
-            !antenv/
 
   deploy:
     runs-on: ubuntu-latest
