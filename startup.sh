@@ -7,19 +7,9 @@ PORT="${PORT:-8000}"
 
 export PYTHONPATH="$PACKAGE_DIR:$PYTHONPATH"
 
-if python -c "import gunicorn" 2>/dev/null; then
-  exec python -m gunicorn --bind=0.0.0.0:"$PORT" --workers 2 --timeout 120 --access-logfile - --error-logfile - app:application
+if python -c "import gunicorn, uvicorn" 2>/dev/null; then
+  exec python -m gunicorn --bind=0.0.0.0:"$PORT" --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --access-logfile - --error-logfile - API.nfl_playoffs_api:app
 fi
 
-echo "gunicorn is not available; falling back to Python's built-in WSGI server."
-exec python - <<'PY'
-import os
-from wsgiref.simple_server import make_server
-
-from app import application
-
-port = int(os.getenv("PORT", "8000"))
-
-with make_server("0.0.0.0", port, application) as server:
-    server.serve_forever()
-PY
+echo "gunicorn is not available; falling back to uvicorn."
+exec python -m uvicorn API.nfl_playoffs_api:app --host 0.0.0.0 --port "$PORT"
