@@ -3,13 +3,20 @@ import requests
 import pandas as pd
 import os
 
+def _normalize_url(url: str) -> str:
+    url = url.strip().rstrip("/")
+    if url and not url.startswith(("http://", "https://")):
+        return f"https://{url}"
+    return url
+
+
 def _get_fastapi_url() -> str:
     env_url = os.getenv("FASTAPI_URL")
     if env_url:
-        return env_url.rstrip("/")
+        return _normalize_url(env_url)
 
     try:
-        return st.secrets.get("FASTAPI_URL", "http://localhost:8000").rstrip("/")
+        return _normalize_url(st.secrets.get("FASTAPI_URL", "http://localhost:8000"))
     except Exception:
         return "http://localhost:8000"
 
