@@ -1,98 +1,8 @@
--- 3 query
+-- Stored procedures for NFL app.
+-- Run after CreateTablesSmith.sql and InsertDataSmith.sql.
 
-
--- 1 for each ConfrenceDivision and team Tables, and 1 inner join query
-/*
-SELECT *
-FROM Team;
-
-SELECT *
-FROM ConfrenceDivision;
-
-SELECT
-    t.TeamID,
-    t.TeamName,
-    t.TeamCityState,
-    t.TeamColors,
-    cd.Confrence,
-    cd.Division
-FROM Team t
-INNER JOIN ConfrenceDivision cd
-    ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID;
-
-    SELECT * FROM ConfrenceDivision;
-
-
-ALTER TABLE Team
-ADD ConfrenceDivisionID INT;
-
-SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'Team';
-
-
-SELECT * FROM ConfrenceDivision;
-
-SELECT *
-FROM Team
-WHERE TeamName = 'Pittsburgh Steelers';
-
-SELECT TeamName, ConfrenceDivisionID
-FROM Team
-WHERE TeamName = 'Pittsburgh Steelers';
-
-SELECT TeamName, ConfrenceDivisionID
-FROM Team
-WHERE ConfrenceDivisionID = 2;
-
-SELECT *
-FROM ConfrenceDivision
-WHERE ConfrenceDivisionID = 2;
-
-SELECT TeamName, ConfrenceDivisionID FROM Team WHERE TeamName = 'Pittsburgh Steelers';
-SELECT TeamName, ConfrenceDivisionID FROM Team WHERE ConfrenceDivisionID = 2;
-
-INSERT INTO Team (TeamName, TeamCityState, TeamColors, ConfrenceDivisionID)
-VALUES
-('Baltimore Ravens', 'Baltimore, MD', 'Purple, Black, Gold', 2),
-('Cincinnati Bengals', 'Cincinnati, OH', 'Black, Orange, White', 2),
-('Cleveland Browns', 'Cleveland, OH', 'Brown, Orange, White', 2),
-('Pittsburgh Steelers', 'Pittsburgh, PA', 'Black, Gold, White', 2);
+USE MIST353_NFL_Smith;
 GO
-
-SELECT TeamName, ConfrenceDivisionID
-FROM Team
-WHERE TeamName = 'Pittsburgh Steelers';
-
-SELECT TeamName, ConfrenceDivisionID
-FROM Team
-WHERE CfiedFan
-(onfrenceDivisionID = 2;
-
-create or alter proc procGetTeamsForSpecifiedFan
-(
-    @NFLFanID INT
-)
-AS
-BEGIN
-    SELECT t.TeamName, cd.Confrence, cd.Division
-    FROM Team t
-    INNER JOIN ConfrenceDivision cd
-        ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
-    INNER JOIN FanTeam ft
-        ON t.TeamID = ft.TeamID
-    WHERE ft.NFLFanID = @NFLFanID;
-END;
-
--- execute procGetTeamsForSpecifiedFan @NFLFanID = 1;
-
-
-
-
-
-/* =========================================
-   1) DELETE OLD PROCEDURES IF THEY EXIST
-   ========================================= */
 
 IF OBJECT_ID('dbo.GetTeamsByConferenceDivision', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetTeamsByConferenceDivision;
@@ -106,10 +16,14 @@ IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
 GO
 
+IF OBJECT_ID('dbo.ScheduleGame', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.ScheduleGame;
+GO
 
-/* =========================================
-   2) RECREATE: GET TEAMS BY CONFERENCE/DIVISION
-   ========================================= */
+IF OBJECT_ID('dbo.procValidateUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.procValidateUser;
+GO
+
 CREATE PROCEDURE dbo.GetTeamsByConferenceDivision
     @Confrence NVARCHAR(50),
     @Division NVARCHAR(50)
@@ -133,11 +47,6 @@ BEGIN
 END;
 GO
 
-
-/* =========================================
-   3) RECREATE: GET TEAMS IN SAME CONFERENCE/DIVISION
-      AS A SPECIFIED TEAM
-   ========================================= */
 CREATE PROCEDURE dbo.GetTeamsInSameConferenceDivisionAsSpecifiedTeam
     @TeamName NVARCHAR(100)
 AS
@@ -166,16 +75,6 @@ BEGIN
 END;
 GO
 
-
-/* =========================================
-   4) RECREATE: GET TEAMS FOR SPECIFIED FAN
-      USES THE LOGGED-IN AppUserID AS @UserID
-      NFLFanID MATCHES AppUserID THROUGH THE NFLFan TABLE
-   ========================================= */
-IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
-GO
-
 CREATE PROCEDURE dbo.GetTeamsForSpecifiedFan
     @UserID INT
 AS
@@ -201,62 +100,46 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE dbo.ScheduleGame
+    @HomeTeamID INT,
+    @AwayTeamID INT,
+    @GameRound NVARCHAR(50),
+    @GameDate DATE,
+    @GameTime TIME,
+    @StadiumID INT,
+    @NFLAdminID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-
-EXEC dbo.GetTeamsForSpecifiedFan @UserID = 3;
-
-SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'FanTeam'
-ORDER BY ORDINAL_POSITION;
-
-
-SELECT name
-FROM sys.procedures
-ORDER BY name;
-
-
-
-DECLARE @sql NVARCHAR(MAX) = N'';
-
-SELECT @sql = @sql + 'DROP PROCEDURE dbo.' + QUOTENAME(name) + ';' + CHAR(13)
-FROM sys.procedures
-WHERE schema_id = SCHEMA_ID('dbo');
-
-EXEC sp_executesql @sql;
-
-
-
-SELECT
-    ft.FanTeamID,
-    ft.NFLFanID,
-    ft.TeamID,
-    ft.PrimaryTeam,
-    t.TeamName,
-    cd.Confrence,
-    cd.Division
-FROM FanTeam ft
-INNER JOIN Team t
-    ON ft.TeamID = t.TeamID
-INNER JOIN ConfrenceDivision cd
-    ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
-ORDER BY ft.FanTeamID;
-
-
-
-SELECT *
-FROM FanTeam
-ORDER BY FanTeamID;
-
-
-EXEC dbo.GetTeamsForSpecifiedFan @UserID = 3;
-
-
-
-
-
-IF OBJECT_ID('dbo.procValidateUser', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.procValidateUser;
+    INSERT INTO Game (
+        HomeTeamID,
+        AwayTeamID,
+        GameRound,
+        GameDate,
+        GameTime,
+        StadiumID,
+        NFLAdminID
+    )
+    OUTPUT
+        INSERTED.GameID,
+        INSERTED.HomeTeamID,
+        INSERTED.AwayTeamID,
+        INSERTED.GameRound,
+        INSERTED.GameDate,
+        INSERTED.GameTime,
+        INSERTED.StadiumID,
+        INSERTED.NFLAdminID
+    VALUES (
+        @HomeTeamID,
+        @AwayTeamID,
+        @GameRound,
+        @GameDate,
+        @GameTime,
+        @StadiumID,
+        @NFLAdminID
+    );
+END;
 GO
 
 CREATE PROCEDURE dbo.procValidateUser
@@ -274,12 +157,4 @@ BEGIN
     WHERE Email = @Email
       AND PasswordHash = @PasswordHash;
 END;
-GO
-
-
-
-
-EXEC dbo.procValidateUser
-    @Email = 'tom.brady@example.com',
-    @PasswordHash = 0x01;
 GO
