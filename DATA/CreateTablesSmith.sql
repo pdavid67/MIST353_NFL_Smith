@@ -6,9 +6,11 @@
 --DROP database NFL_RDB_Smith;
 
 IF OBJECT_ID('AdminUpdate', 'U') IS NOT NULL DROP TABLE AdminUpdate;
-IF OBJECT_ID('FanTeam', 'U') IS NOT NULL DROP TABLE FanTeam;
-IF OBJECT_ID('AppUser', 'U') IS NOT NULL DROP TABLE AppUser;
 IF OBJECT_ID('Game', 'U') IS NOT NULL DROP TABLE Game;
+IF OBJECT_ID('FanTeam', 'U') IS NOT NULL DROP TABLE FanTeam;
+IF OBJECT_ID('NFLAdmin', 'U') IS NOT NULL DROP TABLE NFLAdmin;
+IF OBJECT_ID('NFLFan', 'U') IS NOT NULL DROP TABLE NFLFan;
+IF OBJECT_ID('AppUser', 'U') IS NOT NULL DROP TABLE AppUser;
 IF OBJECT_ID('Stadium', 'U') IS NOT NULL DROP TABLE Stadium;
 IF OBJECT_ID('Team', 'U') IS NOT NULL DROP TABLE Team;
 IF OBJECT_ID('ConfrenceDivision', 'U') IS NOT NULL DROP TABLE ConfrenceDivision;
@@ -20,14 +22,14 @@ if OBJECT_ID('ConfrenceDivision') IS NOT NULL
     DROP TABLE ConfrenceDivision;
 
 
-
 --create tables for first itteration
 
  CREATE TABLE Team (
     TeamID INT IDENTITY(1,1) CONSTRAINT PK_Team PRIMARY KEY,
     TeamName NVARCHAR(50) NOT NULL,
     TeamCityState NVARCHAR(50) NOT NULL,
-    TeamColors NVARCHAR(50) NOT NULL
+    TeamColors NVARCHAR(50) NOT NULL,
+    ConfrenceDivisionID INT NULL
 );
 
 CREATE TABLE ConfrenceDivision (
@@ -85,6 +87,34 @@ create table NFLAdmin(
 
 GO
 
+CREATE TABLE Stadium (
+    StadiumID INT IDENTITY(1,1)
+        CONSTRAINT PK_StadiumID PRIMARY KEY,
+    StadiumName NVARCHAR(100) NOT NULL,
+    StadiumCityState NVARCHAR(100) NOT NULL
+);
+
+GO
+
+CREATE TABLE Game (
+    GameID INT IDENTITY(1,1)
+        CONSTRAINT PK_GameID PRIMARY KEY,
+    HomeTeamID INT NOT NULL
+        CONSTRAINT FK_Game_HomeTeamID FOREIGN KEY REFERENCES Team(TeamID),
+    AwayTeamID INT NOT NULL
+        CONSTRAINT FK_Game_AwayTeamID FOREIGN KEY REFERENCES Team(TeamID),
+    GameRound NVARCHAR(50) NOT NULL,
+    GameDate DATE NOT NULL,
+    GameTime TIME NOT NULL,
+    StadiumID INT NOT NULL
+        CONSTRAINT FK_Game_StadiumID FOREIGN KEY REFERENCES Stadium(StadiumID),
+    NFLAdminID INT NOT NULL
+        CONSTRAINT FK_Game_NFLAdminID FOREIGN KEY REFERENCES NFLAdmin(NFLAdminID),
+    CONSTRAINT CK_Game_DifferentTeams CHECK (HomeTeamID <> AwayTeamID)
+);
+
+GO
+
 create table FanTeam(
     FanTeamID int identity(1,1)
         CONSTRAINT PK_FanTeamID PRIMARY KEY,
@@ -98,6 +128,3 @@ create table FanTeam(
 );
 
 GO
-
-
- 

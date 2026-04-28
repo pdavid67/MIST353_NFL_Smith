@@ -143,6 +143,10 @@ DELETE FROM FanTeam;
 DBCC CHECKIDENT ('FanTeam', RESEED, 0);
 GO
 
+DELETE FROM Game;
+DBCC CHECKIDENT ('Game', RESEED, 0);
+GO
+
 DELETE FROM NFLAdmin;
 GO
 
@@ -155,6 +159,10 @@ GO
 
 DELETE FROM Team;
 DBCC CHECKIDENT ('Team', RESEED, 0);
+GO
+
+DELETE FROM Stadium;
+DBCC CHECKIDENT ('Stadium', RESEED, 0);
 GO
 
 DELETE FROM ConfrenceDivision;
@@ -228,7 +236,20 @@ GO
 
 
 /* =========================================
-   4) REINSERT APP USERS
+   4) REINSERT STADIUMS
+   ========================================= */
+
+INSERT INTO Stadium (StadiumName, StadiumCityState)
+VALUES
+('Highmark Stadium', 'Orchard Park, NY'),
+('Hard Rock Stadium', 'Miami Gardens, FL'),
+('Gillette Stadium', 'Foxborough, MA'),
+('MetLife Stadium', 'East Rutherford, NJ');
+GO
+
+
+/* =========================================
+   5) REINSERT APP USERS
    Do NOT include AppUserID
    ========================================= */
 
@@ -242,7 +263,7 @@ GO
 
 
 /* =========================================
-   5) REINSERT NFLFAN
+   6) REINSERT NFLFAN
    NFLFan has only NFLFanID
    so use the matching AppUser IDs
    ========================================= */
@@ -257,12 +278,10 @@ GO
 
 
 /* =========================================
-   6) OPTIONAL: REINSERT NFLADMIN
-   Only do this if you need admin rows
-   and want AppUser IDs 5-8 to be admins
+   7) REINSERT NFLADMIN
+   AppUser IDs 5-8 are admins
    ========================================= */
 
-/*
 INSERT INTO AppUser (FirstName, LastName, Email, Phone, PasswordHash, UserRole)
 VALUES
 ('Roger', 'Goodell', 'roger.goodell@example.com', '555-5678', 0x05, 'NFLAdmin'),
@@ -278,11 +297,10 @@ VALUES
 (7),
 (8);
 GO
-*/
 
 
 /* =========================================
-   7) REINSERT FANTEAM
+   8) REINSERT FANTEAM
    NFLFanID must exist in NFLFan
    ========================================= */
 
@@ -303,7 +321,7 @@ GO
 
 
 /* =========================================
-   8) CHECK RESULTS
+   9) CHECK RESULTS
    ========================================= */
 
 SELECT * FROM ConfrenceDivision ORDER BY ConfrenceDivisionID;
