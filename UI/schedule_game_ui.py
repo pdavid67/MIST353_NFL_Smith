@@ -11,25 +11,25 @@ except ImportError:
 
 
 def schedule_game_ui():
-    st.header("Schedule Game")
+    st.header("Schedule a Game")
 
-    home_team_id = st.number_input("Home Team ID", min_value=1, step=1, value=1)
-    away_team_id = st.number_input("Away Team ID", min_value=1, step=1, value=2)
-    game_round = st.text_input("Game Round", value="Wild Card")
-    game_date = st.date_input("Game Date")
-    game_time = st.time_input("Game Time")
-    stadium_id = st.number_input("Stadium ID", min_value=1, step=1, value=1)
-    nfl_admin_id = st.number_input("NFL Admin ID", min_value=1, step=1, value=5)
+    home_team_id = st.text_input("Enter Home Team ID:", value="4")
+    away_team_id = st.text_input("Enter Away Team ID:", value="5")
+    game_round = st.text_input("Enter Game Round (e.g., Regular Season, Playoff):", value="Wild Card")
+    game_date = st.text_input("Enter Game Date (YYYY-MM-DD):", value="2026-05-31")
+    game_time = st.text_input("Enter Game Time (HH:MM:SS):", value="15:00")
+    stadium_id = st.text_input("Enter Stadium ID:", value="1")
+    nfl_admin_id = st.text_input("Enter NFL Admin ID:", value="5")
 
     if st.button("Schedule Game"):
         params = {
-            "home_team_id": int(home_team_id),
-            "away_team_id": int(away_team_id),
+            "home_team_id": int(home_team_id.strip()),
+            "away_team_id": int(away_team_id.strip()),
             "game_round": game_round,
-            "game_date": game_date.isoformat(),
-            "game_time": game_time.strftime("%H:%M:%S"),
-            "stadium_id": int(stadium_id),
-            "nfl_admin_id": int(nfl_admin_id),
+            "game_date": game_date.strip(),
+            "game_time": game_time.strip(),
+            "stadium_id": int(stadium_id.strip()),
+            "nfl_admin_id": int(nfl_admin_id.strip()),
         }
 
         try:
