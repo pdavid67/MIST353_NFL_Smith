@@ -255,69 +255,6 @@ EXEC dbo.GetTeamsForSpecifiedFan @UserID = 3;
 
 
 
-/* =========================================
-   5) CREATE: SCHEDULE GAME
-      USED BY POST /schedule_game/
-   ========================================= */
-IF OBJECT_ID('dbo.ScheduleGame', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.ScheduleGame;
-GO
-
-CREATE PROCEDURE dbo.ScheduleGame
-    @HomeTeamID INT,
-    @AwayTeamID INT,
-    @GameRound NVARCHAR(50),
-    @GameDate DATE,
-    @GameTime TIME,
-    @StadiumID INT,
-    @NFLAdminID INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    INSERT INTO Game (
-        HomeTeamID,
-        AwayTeamID,
-        GameRound,
-        GameDate,
-        GameTime,
-        StadiumID,
-        NFLAdminID
-    )
-    OUTPUT
-        INSERTED.GameID,
-        INSERTED.HomeTeamID,
-        INSERTED.AwayTeamID,
-        INSERTED.GameRound,
-        INSERTED.GameDate,
-        INSERTED.GameTime,
-        INSERTED.StadiumID,
-        INSERTED.NFLAdminID
-    VALUES (
-        @HomeTeamID,
-        @AwayTeamID,
-        @GameRound,
-        @GameDate,
-        @GameTime,
-        @StadiumID,
-        @NFLAdminID
-    );
-END;
-GO
-
-
-
-EXEC dbo.ScheduleGame
-    @HomeTeamID = 1,
-    @AwayTeamID = 2,
-    @GameRound = 'Wild Card',
-    @GameDate = '2026-01-10',
-    @GameTime = '13:00',
-    @StadiumID = 1,
-    @NFLAdminID = 5;
-
-
-
 IF OBJECT_ID('dbo.procValidateUser', 'P') IS NOT NULL
     DROP PROCEDURE dbo.procValidateUser;
 GO
