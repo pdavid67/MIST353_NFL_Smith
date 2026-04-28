@@ -169,38 +169,41 @@ GO
 
 /* =========================================
    4) RECREATE: GET TEAMS FOR SPECIFIED FAN
-      ASSUMES A FanTeam TABLE EXISTS
-      WITH: UserID, TeamID
+      USES THE LOGGED-IN AppUserID AS @UserID
+      NFLFanID MATCHES AppUserID THROUGH THE NFLFan TABLE
    ========================================= */
 IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
 GO
 
 CREATE PROCEDURE dbo.GetTeamsForSpecifiedFan
-    @FanTeamID INT
+    @UserID INT
 AS
 BEGIN
     SET NOCOUNT ON;
 
     SELECT
+        ft.FanTeamID,
         t.TeamID,
         t.TeamName,
         t.TeamCityState,
         t.TeamColors,
         cd.Confrence,
-        cd.Division
+        cd.Division,
+        ft.PrimaryTeam
     FROM FanTeam ft
     INNER JOIN Team t
         ON ft.TeamID = t.TeamID
     INNER JOIN ConfrenceDivision cd
         ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
-    WHERE ft.FanTeamID = @FanTeamID;
+    WHERE ft.NFLFanID = @UserID
+    ORDER BY ft.PrimaryTeam DESC, t.TeamName;
 END;
 GO
 
 
 
-EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = 3;
+EXEC dbo.GetTeamsForSpecifiedFan @UserID = 3;
 
 SELECT COLUMN_NAME
 FROM INFORMATION_SCHEMA.COLUMNS
@@ -246,7 +249,7 @@ FROM FanTeam
 ORDER BY FanTeamID;
 
 
-EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = 3;
+EXEC dbo.GetTeamsForSpecifiedFan @UserID = 3;
 
 
 

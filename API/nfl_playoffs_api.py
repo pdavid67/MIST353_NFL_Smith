@@ -41,9 +41,9 @@ def teams_in_same_conference_division_as_specified_team(team_name: str):
     return functions["get_teams_in_same_conference_division_as_specified_team"](team_name)
 
 @app.get("/get_teams_for_specified_fan")
-def teams_for_specified_fan(FanTeamID: int):
+def teams_for_specified_fan(user_id: int):
     functions = _load_api_functions()
-    return functions["get_teams_for_specified_fan"](FanTeamID)
+    return functions["get_teams_for_specified_fan"](user_id)
 
 @app.get("/validate_user")
 def validate_user_route(email: str, password_hash: str):

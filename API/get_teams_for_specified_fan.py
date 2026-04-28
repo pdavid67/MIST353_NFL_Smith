@@ -3,7 +3,7 @@ try:
 except ImportError:
     from get_db_connection import get_db_connection
 
-def get_teams_for_specified_fan(FanTeamID):
+def get_teams_for_specified_fan(user_id):
     conn = None
 
     try:
@@ -11,8 +11,8 @@ def get_teams_for_specified_fan(FanTeamID):
         cursor = conn.cursor()
 
         cursor.execute(
-            "EXEC dbo.GetTeamsForSpecifiedFan @FanTeamID = ?",
-            FanTeamID
+            "EXEC dbo.GetTeamsForSpecifiedFan @UserID = ?",
+            user_id
         )
 
         rows = cursor.fetchall()
