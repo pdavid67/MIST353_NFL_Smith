@@ -16,6 +16,14 @@ IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
 GO
 
+IF OBJECT_ID('dbo.procGetAllTeams', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.procGetAllTeams;
+GO
+
+IF OBJECT_ID('dbo.procGetAllStadiums', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.procGetAllStadiums;
+GO
+
 IF OBJECT_ID('dbo.ScheduleGame', 'P') IS NOT NULL
     DROP PROCEDURE dbo.ScheduleGame;
 GO
@@ -100,6 +108,32 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE dbo.procGetAllTeams
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        TeamID,
+        TeamName
+    FROM Team
+    ORDER BY TeamName;
+END;
+GO
+
+CREATE PROCEDURE dbo.procGetAllStadiums
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        StadiumID,
+        StadiumName
+    FROM Stadium
+    ORDER BY StadiumName;
+END;
+GO
+
 CREATE PROCEDURE dbo.ScheduleGame
     @HomeTeamID INT,
     @AwayTeamID INT,
@@ -111,6 +145,25 @@ CREATE PROCEDURE dbo.ScheduleGame
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM NFLAdmin WHERE NFLAdminID = @NFLAdminID)
+    BEGIN
+        RAISERROR('Only users with the NFLAdmin role can schedule games.', 16, 1);
+        RETURN;
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM Game
+        WHERE GameDate = @GameDate
+          AND GameTime = @GameTime
+    )
+    BEGIN
+        SELECT
+            CAST(0 AS BIT) AS Scheduled,
+            'Game already scheduled for the specified date and time.' AS Message;
+        RETURN;
+    END;
 
     INSERT INTO Game (
         HomeTeamID,

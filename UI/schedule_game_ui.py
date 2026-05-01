@@ -1,35 +1,76 @@
-import os
+from datetime import date
 
 import pandas as pd
 import requests
 import streamlit as st
 
-try:
-    from fetch_data import FASTAPI_url
-except ImportError:
-    FASTAPI_url = os.getenv("FASTAPI_URL", "http://localhost:8000").strip().rstrip("/")
+from fetch_data import FASTAPI_url, fetch_data
+
+
+def _get_logged_in_admin_id():
+    role = st.session_state.get("app_user_role") or st.session_state.get("user_role")
+    if role != "NFLAdmin":
+        return None
+    return st.session_state.get("app_user_id") or st.session_state.get("user_id")
+
+
+def _name_to_id_options(df: pd.DataFrame, id_column: str, name_column: str):
+    if df is None or df.empty:
+        return {}
+    return {
+        str(row[name_column]): int(row[id_column])
+        for _, row in df.sort_values(name_column).iterrows()
+    }
 
 
 def schedule_game_ui():
     st.header("Schedule a Game")
 
-    home_team_id = st.text_input("Enter Home Team ID:", value="4")
-    away_team_id = st.text_input("Enter Away Team ID:", value="5")
-    game_round = st.text_input("Enter Game Round (e.g., Regular Season, Playoff):", value="Wild Card")
-    game_date = st.text_input("Enter Game Date (YYYY-MM-DD):", value="2026-05-31")
-    game_time = st.text_input("Enter Game Time (HH:MM:SS):", value="15:00")
-    stadium_id = st.text_input("Enter Stadium ID:", value="1")
-    nfl_admin_id = st.text_input("Enter NFL Admin ID:", value="5")
+    nfl_admin_id = _get_logged_in_admin_id()
+    if nfl_admin_id is None:
+        st.warning("Please validate as an NFLAdmin before scheduling a game.")
+        return
+
+    teams_df = fetch_data("get_all_teams", {})
+    stadiums_df = fetch_data("get_all_stadiums", {})
+    team_options = _name_to_id_options(teams_df, "TeamID", "TeamName")
+    stadium_options = _name_to_id_options(stadiums_df, "StadiumID", "StadiumName")
+
+    if not team_options or not stadium_options:
+        st.warning("Teams and stadiums must load before a game can be scheduled.")
+        return
+
+    team_names = list(team_options.keys())
+    home_team_name = st.selectbox("Select Home Team", team_names)
+    away_team_name = st.selectbox(
+        "Select Away Team",
+        team_names,
+        index=1 if len(team_names) > 1 else 0,
+    )
+    stadium_name = st.selectbox("Select Stadium", list(stadium_options.keys()))
+    game_round = st.selectbox(
+        "Select Game Round",
+        ["Wild Card", "Divisional", "Conference Championship", "Super Bowl"],
+    )
+    game_date = st.date_input("Select Game Date", value=date(2026, 6, 30))
+    game_time = st.selectbox(
+        "Select Game Start Time",
+        ["13:00:00", "16:30:00", "20:15:00"],
+    )
 
     if st.button("Schedule Game"):
+        if home_team_name == away_team_name:
+            st.error("Home team and away team must be different.")
+            return
+
         params = {
-            "home_team_id": int(home_team_id.strip()),
-            "away_team_id": int(away_team_id.strip()),
+            "home_team_id": team_options[home_team_name],
+            "away_team_id": team_options[away_team_name],
             "game_round": game_round,
-            "game_date": game_date.strip(),
-            "game_time": game_time.strip(),
-            "stadium_id": int(stadium_id.strip()),
-            "nfl_admin_id": int(nfl_admin_id.strip()),
+            "game_date": game_date.isoformat(),
+            "game_time": game_time,
+            "stadium_id": stadium_options[stadium_name],
+            "nfl_admin_id": int(nfl_admin_id),
         }
 
         try:
@@ -48,7 +89,11 @@ def schedule_game_ui():
                 st.error(payload["error"])
                 return
 
-            st.success(payload.get("message", "Game scheduled successfully."))
+            message = payload.get("message", "Game scheduled successfully.")
+            if "already scheduled" in message.lower():
+                st.info(message)
+            else:
+                st.success(message)
 
             data = payload.get("data", [])
             if data:

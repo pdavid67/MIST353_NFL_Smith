@@ -1,1 +1,2 @@
 -r API/requirements.txt
+-r UI/requirements.txt

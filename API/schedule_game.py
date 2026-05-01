@@ -22,6 +22,20 @@ def schedule_game(
         cursor = conn.cursor()
 
         cursor.execute(
+            "SELECT COUNT(*) FROM NFLAdmin WHERE NFLAdminID = ?",
+            (nfl_admin_id,),
+        )
+        if cursor.fetchone()[0] == 0:
+            return {"error": "Only users with the NFLAdmin role can schedule games."}
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM Game WHERE GameDate = ? AND GameTime = ?",
+            (game_date, game_time),
+        )
+        if cursor.fetchone()[0] > 0:
+            return {"message": "Game already scheduled for the specified date and time.", "data": []}
+
+        cursor.execute(
             """
             EXEC dbo.ScheduleGame
                 @HomeTeamID = ?,
