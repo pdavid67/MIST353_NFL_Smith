@@ -12,8 +12,10 @@ def _load_api_functions():
             get_teams_in_same_conference_division_as_specified_team,
         )
         from .get_teams_for_specified_fan import get_teams_for_specified_fan
+        from .get_teams_with_logos_for_specified_fan import get_teams_with_logos_for_specified_fan
         from .get_all_teams import get_all_teams
         from .get_all_stadiums import get_all_stadiums
+        from .get_all_changes_made_by_specified_admin import get_all_changes_made_by_specified_admin
         from .schedule_game import schedule_game
         from .validate_user import validate_user
     except ImportError:
@@ -22,8 +24,10 @@ def _load_api_functions():
             get_teams_in_same_conference_division_as_specified_team,
         )
         from get_teams_for_specified_fan import get_teams_for_specified_fan
+        from get_teams_with_logos_for_specified_fan import get_teams_with_logos_for_specified_fan
         from get_all_teams import get_all_teams
         from get_all_stadiums import get_all_stadiums
+        from get_all_changes_made_by_specified_admin import get_all_changes_made_by_specified_admin
         from schedule_game import schedule_game
         from validate_user import validate_user
 
@@ -31,8 +35,10 @@ def _load_api_functions():
         "get_teams_by_conference_division": get_teams_by_conference_division,
         "get_teams_in_same_conference_division_as_specified_team": get_teams_in_same_conference_division_as_specified_team,
         "get_teams_for_specified_fan": get_teams_for_specified_fan,
+        "get_teams_with_logos_for_specified_fan": get_teams_with_logos_for_specified_fan,
         "get_all_teams": get_all_teams,
         "get_all_stadiums": get_all_stadiums,
+        "get_all_changes_made_by_specified_admin": get_all_changes_made_by_specified_admin,
         "schedule_game": schedule_game,
         "validate_user": validate_user,
     }
@@ -56,6 +62,11 @@ def teams_for_specified_fan(user_id: int):
     functions = _load_api_functions()
     return functions["get_teams_for_specified_fan"](user_id)
 
+@app.get("/get_teams_with_logos_for_specified_fan")
+def teams_with_logos_for_specified_fan(fan_id: int):
+    functions = _load_api_functions()
+    return functions["get_teams_with_logos_for_specified_fan"](fan_id)
+
 @app.get("/get_all_teams")
 def all_teams():
     functions = _load_api_functions()
@@ -65,6 +76,11 @@ def all_teams():
 def all_stadiums():
     functions = _load_api_functions()
     return functions["get_all_stadiums"]()
+
+@app.get("/get_all_changes_made_by_specified_admin")
+def all_changes_made_by_specified_admin(user_id: int):
+    functions = _load_api_functions()
+    return functions["get_all_changes_made_by_specified_admin"](user_id)
 
 @app.post("/schedule_game/")
 def schedule_game_api(

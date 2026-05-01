@@ -4,8 +4,9 @@ from fetch_data import fetch_data
 def validate_user_ui():
     st.header("Validate User")
 
-    email = st.text_input("Enter Email")
-    password_hash = st.text_input("Enter Password", type="password")
+    with st.container():
+        email = st.text_input("Enter Email")
+        password_hash = st.text_input("Enter Password", type="password")
 
     if st.button("Validate User"):
         params = {
@@ -30,7 +31,7 @@ def validate_user_ui():
             st.session_state["user_role"] = user_role
             st.session_state["app_user_role"] = user_role
             st.success("User validated.")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
         else:
             st.session_state.pop("user-id", None)
             st.session_state.pop("user_id", None)

@@ -46,4 +46,16 @@ uvicorn API.nfl_playoffs_api:app --reload
 streamlit run UI/nfl_playoffs_ui.py
 ```
 
+You can also run the root launcher:
+
+```powershell
+python -m streamlit run nfl_playoffs_ui.py
+```
+
 Use **Validate User** first. Only users with the `NFLAdmin` role can schedule games.
+
+To load the included team logos into your local database after running the SQL scripts:
+
+```powershell
+python DATA/insert_logos.py
+```

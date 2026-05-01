@@ -16,6 +16,10 @@ IF OBJECT_ID('dbo.GetTeamsForSpecifiedFan', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetTeamsForSpecifiedFan;
 GO
 
+IF OBJECT_ID('dbo.procGetTeamsWithLogosForSpecifiedFan', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.procGetTeamsWithLogosForSpecifiedFan;
+GO
+
 IF OBJECT_ID('dbo.procGetAllTeams', 'P') IS NOT NULL
     DROP PROCEDURE dbo.procGetAllTeams;
 GO
@@ -24,12 +28,20 @@ IF OBJECT_ID('dbo.procGetAllStadiums', 'P') IS NOT NULL
     DROP PROCEDURE dbo.procGetAllStadiums;
 GO
 
+IF OBJECT_ID('dbo.procGetAllChangesMadeBySpecifiedAdmin', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.procGetAllChangesMadeBySpecifiedAdmin;
+GO
+
 IF OBJECT_ID('dbo.ScheduleGame', 'P') IS NOT NULL
     DROP PROCEDURE dbo.ScheduleGame;
 GO
 
 IF OBJECT_ID('dbo.procValidateUser', 'P') IS NOT NULL
     DROP PROCEDURE dbo.procValidateUser;
+GO
+
+IF OBJECT_ID('dbo.trgTrackChangesOnSchedulingGame', 'TR') IS NOT NULL
+    DROP TRIGGER dbo.trgTrackChangesOnSchedulingGame;
 GO
 
 CREATE PROCEDURE dbo.GetTeamsByConferenceDivision
@@ -108,6 +120,29 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE dbo.procGetTeamsWithLogosForSpecifiedFan
+    @NFLFanID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        t.TeamName,
+        cd.Confrence AS Conference,
+        cd.Division,
+        t.TeamColors,
+        ft.PrimaryTeam,
+        t.TeamLogo
+    FROM FanTeam ft
+    INNER JOIN Team t
+        ON ft.TeamID = t.TeamID
+    INNER JOIN ConfrenceDivision cd
+        ON t.ConfrenceDivisionID = cd.ConfrenceDivisionID
+    WHERE ft.NFLFanID = @NFLFanID
+    ORDER BY ft.PrimaryTeam DESC, t.TeamName;
+END;
+GO
+
 CREATE PROCEDURE dbo.procGetAllTeams
 AS
 BEGIN
@@ -131,6 +166,36 @@ BEGIN
         StadiumName
     FROM Stadium
     ORDER BY StadiumName;
+END;
+GO
+
+CREATE PROCEDURE dbo.procGetAllChangesMadeBySpecifiedAdmin
+    @NFLAdminID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        act.ChangeDateTime,
+        act.ChangeType,
+        act.ChangeDescription,
+        g.GameRound,
+        g.GameDate,
+        g.GameTime,
+        ht.TeamName AS HomeTeam,
+        at.TeamName AS AwayTeam,
+        s.StadiumName
+    FROM AdminChangesTracker act
+    INNER JOIN Game g
+        ON act.GameID = g.GameID
+    INNER JOIN Team ht
+        ON g.HomeTeamID = ht.TeamID
+    INNER JOIN Team at
+        ON g.AwayTeamID = at.TeamID
+    INNER JOIN Stadium s
+        ON g.StadiumID = s.StadiumID
+    WHERE act.NFLAdminID = @NFLAdminID
+    ORDER BY act.ChangeDateTime DESC;
 END;
 GO
 
@@ -165,6 +230,17 @@ BEGIN
         RETURN;
     END;
 
+    DECLARE @ScheduledGame TABLE (
+        GameID INT,
+        HomeTeamID INT,
+        AwayTeamID INT,
+        GameRound NVARCHAR(50),
+        GameDate DATE,
+        GameTime TIME,
+        StadiumID INT,
+        NFLAdminID INT
+    );
+
     INSERT INTO Game (
         HomeTeamID,
         AwayTeamID,
@@ -183,6 +259,7 @@ BEGIN
         INSERTED.GameTime,
         INSERTED.StadiumID,
         INSERTED.NFLAdminID
+    INTO @ScheduledGame
     VALUES (
         @HomeTeamID,
         @AwayTeamID,
@@ -192,6 +269,43 @@ BEGIN
         @StadiumID,
         @NFLAdminID
     );
+
+    SELECT
+        GameID,
+        HomeTeamID,
+        AwayTeamID,
+        GameRound,
+        GameDate,
+        GameTime,
+        StadiumID,
+        NFLAdminID
+    FROM @ScheduledGame;
+END;
+GO
+
+CREATE TRIGGER dbo.trgTrackChangesOnSchedulingGame
+ON dbo.Game
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO AdminChangesTracker (
+        NFLAdminID,
+        GameID,
+        ChangeType,
+        ChangeDescription
+    )
+    SELECT
+        i.NFLAdminID,
+        i.GameID,
+        'Schedule Game',
+        CONCAT('Scheduled ', ht.TeamName, ' vs ', at.TeamName, ' on ', CONVERT(NVARCHAR(10), i.GameDate, 120), ' at ', CONVERT(NVARCHAR(8), i.GameTime, 108))
+    FROM inserted i
+    INNER JOIN Team ht
+        ON i.HomeTeamID = ht.TeamID
+    INNER JOIN Team at
+        ON i.AwayTeamID = at.TeamID;
 END;
 GO
 

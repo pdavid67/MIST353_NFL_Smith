@@ -4,6 +4,7 @@
 -- USE MIST353_NFL_Smith;
 -- GO
 
+IF OBJECT_ID('AdminChangesTracker', 'U') IS NOT NULL DROP TABLE AdminChangesTracker;
 IF OBJECT_ID('Game', 'U') IS NOT NULL DROP TABLE Game;
 IF OBJECT_ID('FanTeam', 'U') IS NOT NULL DROP TABLE FanTeam;
 IF OBJECT_ID('NFLAdmin', 'U') IS NOT NULL DROP TABLE NFLAdmin;
@@ -31,6 +32,7 @@ CREATE TABLE Team (
     TeamName NVARCHAR(50) NOT NULL,
     TeamCityState NVARCHAR(50) NOT NULL,
     TeamColors NVARCHAR(50) NOT NULL,
+    TeamLogo VARBINARY(MAX) NULL,
     ConfrenceDivisionID INT NOT NULL
         CONSTRAINT FK_Team_ConfrenceDivisionID
         FOREIGN KEY REFERENCES ConfrenceDivision(ConfrenceDivisionID)
@@ -100,5 +102,19 @@ CREATE TABLE Game (
     NFLAdminID INT NOT NULL
         CONSTRAINT FK_Game_NFLAdminID FOREIGN KEY REFERENCES NFLAdmin(NFLAdminID),
     CONSTRAINT CK_Game_DifferentTeams CHECK (HomeTeamID <> AwayTeamID)
+);
+GO
+
+CREATE TABLE AdminChangesTracker (
+    AdminChangesTrackerID INT IDENTITY(1,1)
+        CONSTRAINT PK_AdminChangesTracker PRIMARY KEY,
+    NFLAdminID INT NOT NULL
+        CONSTRAINT FK_AdminChangesTracker_NFLAdminID FOREIGN KEY REFERENCES NFLAdmin(NFLAdminID),
+    GameID INT NOT NULL
+        CONSTRAINT FK_AdminChangesTracker_GameID FOREIGN KEY REFERENCES Game(GameID),
+    ChangeDateTime DATETIME2 NOT NULL
+        CONSTRAINT DF_AdminChangesTracker_ChangeDateTime DEFAULT SYSDATETIME(),
+    ChangeType NVARCHAR(50) NOT NULL,
+    ChangeDescription NVARCHAR(500) NOT NULL
 );
 GO

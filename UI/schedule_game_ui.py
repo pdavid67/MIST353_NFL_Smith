@@ -24,7 +24,7 @@ def _name_to_id_options(df: pd.DataFrame, id_column: str, name_column: str):
 
 
 def schedule_game_ui():
-    st.header("Schedule a Game")
+    st.header("Schedule a New Game")
 
     nfl_admin_id = _get_logged_in_admin_id()
     if nfl_admin_id is None:
@@ -40,23 +40,33 @@ def schedule_game_ui():
         st.warning("Teams and stadiums must load before a game can be scheduled.")
         return
 
+    st.markdown(
+        f"<div class='success-strip'>Logged in as: {st.session_state.get('full_name', 'NFL Admin')}</div>",
+        unsafe_allow_html=True,
+    )
+
     team_names = list(team_options.keys())
-    home_team_name = st.selectbox("Select Home Team", team_names)
-    away_team_name = st.selectbox(
-        "Select Away Team",
-        team_names,
-        index=1 if len(team_names) > 1 else 0,
-    )
-    stadium_name = st.selectbox("Select Stadium", list(stadium_options.keys()))
-    game_round = st.selectbox(
-        "Select Game Round",
-        ["Wild Card", "Divisional", "Conference Championship", "Super Bowl"],
-    )
-    game_date = st.date_input("Select Game Date", value=date(2026, 6, 30))
-    game_time = st.selectbox(
-        "Select Game Start Time",
-        ["13:00:00", "16:30:00", "20:15:00"],
-    )
+    left_col, right_col = st.columns(2, gap="large")
+    with left_col:
+        home_team_name = st.selectbox("Select Home Team", team_names)
+        stadium_name = st.selectbox("Select Stadium", list(stadium_options.keys()))
+        game_round = st.selectbox(
+            "Select Game Round",
+            ["Wild Card", "Divisional", "Conference Championship", "Super Bowl"],
+        )
+    with right_col:
+        away_team_name = st.selectbox(
+            "Select Away Team",
+            team_names,
+            index=1 if len(team_names) > 1 else 0,
+        )
+        game_date = st.date_input("Select Game Date", value=date(2026, 6, 30))
+        game_time = st.selectbox(
+            "Select Game Start Time",
+            ["13:00:00", "16:30:00", "20:15:00"],
+        )
+
+    st.markdown(f"<p class='muted-note'>NFL Admin ID: {nfl_admin_id} auto-filled from your login.</p>", unsafe_allow_html=True)
 
     if st.button("Schedule Game"):
         if home_team_name == away_team_name:
@@ -97,6 +107,6 @@ def schedule_game_ui():
 
             data = payload.get("data", [])
             if data:
-                st.dataframe(pd.DataFrame(data), use_container_width=True)
+                st.dataframe(pd.DataFrame(data), width="stretch")
         except Exception as e:
             st.error(f"Error: {e}")
